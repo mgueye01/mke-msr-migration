@@ -39,11 +39,13 @@ CURLOPTS=(-kLsS -H 'accept: application/json' -H "Authorization: Bearer ${SRC_TO
 DEST_CURLOPTS=(-kLsSi -H 'accept: application/json' -H "Authorization: Bearer ${DEST_TOKEN}" -H "Content-Type: application/json")
 
 ## Get all accounts
+echo "Requesting all the accounts..."
 accounts=$(curl "${CURLOPTS[@]}" -X GET "https://$SOURCE_MKE/accounts/?filter=all&limit=$LIMIT" | jq -r .accounts)
 
 echo "$accounts" > accounts.json
 
 ## Get Orgs
+echo "Getting Org names..."
 orgs=$(curl "${CURLOPTS[@]}" -X GET "https://$SOURCE_MKE/accounts/?filter=orgs&limit=$LIMIT" | jq -r .accounts[].name)
 
 ## Get Teams
@@ -60,7 +62,6 @@ do
 
         teams=$(curl "${CURLOPTS[@]}" -X GET "https://$SOURCE_MKE/accounts/$ORG/teams?filter=orgs&limit=$LIMIT" | jq -r .teams[].name)
         
-
         for TEAM in $teams;
         do
             ## Create Team
@@ -77,16 +78,29 @@ do
 
                 ## Get memberSyncConfig
                 MEMBER_SYNC_CONFIG=$(curl "${CURLOPTS[@]}"  -X GET "https://${SOURCE_MKE}/accounts/${ORG}/teams/${TEAM}/memberSyncConfig")
-
                 MEMBER_SYNC_CONFIG_RESPONSE=$(curl "${DEST_CURLOPTS[@]}" -X PUT "https://${DEST_MKE}/accounts/${ORG}/teams/${TEAM}/memberSyncConfig" -d "$MEMBER_SYNC_CONFIG" )
 
+                ## Get Members
+                MEMBERS=$(curl "${CURLOPTS[@]}" -X GET "https://$SOURCE_MKE/accounts/$ORG/teams/$TEAM/members?filter=orgs&limit=$LIMIT" | jq -r .members[].member.name)
+                ## If Sync is not enabled add users to team manually
+                MEMBER_SYNC_CONFIG_FALSE=$(echo $MEMBER_SYNC_CONFIG | jq -r .enableSync)
+                echo $MEMBER_SYNC_CONFIG_FALSE
+                if ! $MEMBER_SYNC_CONFIG_FALSE;
+                then
+                    echo "LDAP Sync for the team($TEAM) is not enabled"
+                    echo "Adding members to the team"
+                    echo "members -- " $MEMBERS
+                    for MEMBER in $MEMBERS;
+                    do 
+                        echo "adding $MEMBER"
+                        data=$(echo { \"isAdmin\": false })
+                        R=$(curl "${DEST_CURLOPTS[@]}" -X PUT "https://${DEST_MKE}/accounts/${ORG}/teams/${TEAM}/members/${MEMBER}" -d "$data" )
+                    done
+                fi
             fi
 
 
-            ## Get Members
-            members=$(curl "${CURLOPTS[@]}" -X GET "https://$SOURCE_MKE/accounts/$ORG/teams/$TEAM/members?filter=orgs&limit=$LIMIT" | jq -r .members[].member.name)
             
-            ## If Sync is not enabled add users to team manually
 
 
             echo $ORG "->" $TEAM "-> (" $members ")"
