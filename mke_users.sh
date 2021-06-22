@@ -26,7 +26,7 @@ function getAccessToken() {
 
     # use your UCP username and password to acquire a UCP API auth token
     data=$(echo {\"username\": \"$USER\" ,\"password\": \"$PASSWD\" })
-    AUTHTOKEN=$(curl -sk -d "${data}" https://${MKE_FQDN}/auth/login | python -c "import sys, json; print json.load(sys.stdin)['auth_token']")
+    AUTHTOKEN=$(curl -sk -d "${data}" https://${MKE_FQDN}/auth/login | awk -F ':' '{print $2}' | tr -d '"{}')
 
     echo "$AUTHTOKEN"
 }
