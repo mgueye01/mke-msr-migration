@@ -8,14 +8,15 @@
 echo "***************************************\\n"
 [ -z "$REPOS_FILE" ] && read -p "Repositories file(repositories.json):" REPOS_FILE
 [ -z "$REPOS_WITH_TAGS" ] && read -p "Repositories with tags file(repo_tags.txt):" REPOS_WITH_TAGS
-[ -z "$REPOS_COUNT_FILE" ] && read -s -p "Repository Count file(repo_count.txt):" REPOS_COUNT_FILE
+[ -z "$REPOS_COUNT_FILE" ] && read -p "Repository Count file(repo_count.txt):" REPOS_COUNT_FILE
 echo "***************************************\\n"
 
-REPOS_FILE=${1:-repositories.json}
-REPOS_WITH_TAGS=${2:-repo_tags.txt}
-REPOS_COUNT_FILE=${3:-repo_count.txt}
+## Set defaults
+[ -z "$REPOS_FILE" ] && REPOS_FILE="repositories.json"
+[ -z "$REPOS_WITH_TAGS" ] && REPOS_WITH_TAGS="repo_tags.txt"
+[ -z "$REPOS_COUNT_FILE" ] && REPOS_COUNT_FILE="repo_count.txt"
 
-## Empty files
+## Reset file content
 : > $REPOS_FILE
 : > $REPOS_WITH_TAGS
 : > $REPOS_COUNT_FILE
