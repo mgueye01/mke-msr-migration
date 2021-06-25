@@ -6,12 +6,14 @@
 [ -z "$MSR_PASSWORD" ] && read -s -p "Enter the MSR token or password and press [ENTER]:" MSR_PASSWORD
 
 echo "***************************************\\n"
+[ -z "$NAMESPACE" ] && read -p "Org/Namespace(all):" NAMESPACE
 [ -z "$REPOS_FILE" ] && read -p "Repositories file(repositories.json):" REPOS_FILE
 [ -z "$REPOS_WITH_TAGS" ] && read -p "Repositories with tags file(repo_tags.txt):" REPOS_WITH_TAGS
 [ -z "$REPOS_COUNT_FILE" ] && read -p "Repository Count file(repo_count.txt):" REPOS_COUNT_FILE
 echo "***************************************\\n"
 
 ## Set defaults
+[ -z "$NAMESPACE" ] && NAMESPACE=""
 [ -z "$REPOS_FILE" ] && REPOS_FILE="repositories.json"
 [ -z "$REPOS_WITH_TAGS" ] && REPOS_WITH_TAGS="repo_tags.txt"
 [ -z "$REPOS_COUNT_FILE" ] && REPOS_COUNT_FILE="repo_count.txt"
@@ -22,7 +24,7 @@ echo "***************************************\\n"
 : > $REPOS_COUNT_FILE
 
 ## Extract repositories info
-repos=$(curl -ks -u ${MSR_USER}:${MSR_PASSWORD} -X GET "https://${MSR_HOSTNAME}/api/v0/repositories?pageSize=100000&count=true" -H "accept: application/json" | jq .repositories)
+repos=$(curl -ks -u ${MSR_USER}:${MSR_PASSWORD} -X GET "https://${MSR_HOSTNAME}/api/v0/repositories/${NAMESPACE}?pageSize=100000&count=true" -H "accept: application/json" | jq .repositories)
 repo_num=$(echo $repos | jq 'length')
 repo_list=$(echo "${repos}" | jq -c -r '.[]')
 # # Loop through repos to get total tags
