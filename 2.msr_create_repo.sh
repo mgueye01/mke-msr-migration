@@ -5,7 +5,7 @@
 [ -z "$DTR_USER" ] && read -p "Enter the DTR username and press [ENTER]:" DTR_USER
 [ -z "$DTR_PASSWORD" ] && read -s -p "Enter the DTR token or password and press [ENTER]:" DTR_PASSWORD
 echo "***************************************\\n"
-
+[ -z "$REPOS_FILE" ] && read -p "Repositories file(repositories.json):" REPOS_FILE
 REPOSITORIES_FILE=repositories.json
 
 TOKEN=$(curl -kLsS -u ${DTR_USER}:${DTR_PASSWORD} "https://${DTR_HOSTNAME}/auth/token" | jq -r '.token')

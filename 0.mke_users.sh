@@ -98,11 +98,6 @@ do
                     done
                 fi
             fi
-
-
-            
-
-
             echo $ORG "->" $TEAM "-> (" $members ")"
         done
     fi
