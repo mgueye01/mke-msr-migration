@@ -92,7 +92,7 @@ while IFS= read -r image; do
         
         docker pull -q ${SOURCE_MSR}/${image}
         docker image tag ${SOURCE_MSR}/${image} ${DEST_MSR}/${image}
-        #echo "docker push -q ${DEST_MSR}/${image}"
+        docker push -q ${DEST_MSR}/${image}"
         sleep 5s
         
 
