@@ -20,8 +20,8 @@ if ! test "$REPOS_WITH_TAGS"; then
   echo "Please pass REPOS_WITH_TAGS file here"
 fi
 
-## Size in GB -> 10G Default
-MAX_AVAIL=10240
+## Size in GB -> ~10G Default
+MAX_AVAIL=16061861888
 
 touch tags.SUCCESS
 touch tags.PROCESSING
@@ -41,17 +41,15 @@ function msr_login() {
 
 # Check disk size
 function checkDiskSize() {
-    #avail=$(df --output=avail -B 1 /var/lib/docker | tail -n 1)
-    avail=100
+    avail=$(df --output=avail -B 1 /var/lib/docker | tail -n 1)
+    #avail=100
     while (($avail < $MAX_AVAIL)); do
         echo "Removing images.."
         removeImages
-        avail=10241
-        if (($avail < $MAX_AVAIL)); then
-            echo ""
-        fi
-
-        break
+        #avail=10241
+        #if (($avail < $MAX_AVAIL)); then
+        #    echo ""
+        #fi
     done
 }
 
@@ -60,11 +58,11 @@ function removeImages() {
     for _file in tags.SUCCESS tags.FAILED; do
         if [ -s "$_file" ] 
         then
-                src_images_to_remove=$(cat $_file | sed "s/^/${SOURCE_MSR}/" | tr '\n' ' ')
-                dest_images_to_remove=$(cat $_file | sed "s/^/${DEST_MSR}/" | tr '\n' ' ')
+                src_images_to_remove=$(cat $_file | sed "s/^/${SOURCE_MSR}\//" | tr '\n' ' ')
+                dest_images_to_remove=$(cat $_file | sed "s/^/${DEST_MSR}\//" | tr '\n' ' ')
                 
-                echo docker image rmi $src_images_to_remove $dest_images_to_remove
-                sleep 120s
+                docker image rmi -f $src_images_to_remove $dest_images_to_remove
+                sleep 5s
         else
             continue
         fi
@@ -77,7 +75,7 @@ msr_login $DEST_MSR $DEST_MSR_USER $DEST_MSR_PASSWORD
 while IFS= read -r image; do
     
     #echo "Checking disk size..."
-    #checkDiskSize
+    checkDiskSize
     
     if grep -q ${image} tags.PROCESSING tags.SUCCESS; then
         echo "Skipped $image"
@@ -91,10 +89,9 @@ while IFS= read -r image; do
         
         
         docker pull -q ${SOURCE_MSR}/${image}
+	
         docker image tag ${SOURCE_MSR}/${image} ${DEST_MSR}/${image}
-        docker push -q ${DEST_MSR}/${image}"
-        sleep 5s
-        
+        docker push ${DEST_MSR}/${image}
 
         if [ $? -eq 0 ]; then
             echo "Completed processing image: $image"
@@ -103,8 +100,13 @@ while IFS= read -r image; do
             echo "Failed processing image: $image"
             echo "$image" >> tags.FAILED
         fi
+	sleep 3s
         ## Remove line from processing
-        sed -i '.bak' "s~$image~~g" tags.PROCESSING
-        sed -i '.bak' '/^$/d' tags.PROCESSING
+	#set -x
+        #sed -i '.bak' "s~$image~~g" tags.PROCESSING
+        #sed -i '.bak' '/^$/d' tags.PROCESSING
+        sed -i "s~$image~~g" tags.PROCESSING
+        sed -i '/^$/d' tags.PROCESSING
+	#set +x
     fi
 done < $REPOS_WITH_TAGS
