@@ -1,9 +1,12 @@
 #!/bin/bash
 
 ## Capture MSR Info
-[ -z "$MSR_HOSTNAME" ] && read -p "Enter the MSR hostname and press [ENTER]:" MSR_HOSTNAME
-[ -z "$MSR_USER" ] && read -p "Enter the MSR username and press [ENTER]:" MSR_USER
-[ -z "$MSR_PASSWORD" ] && read -s -p "Enter the MSR token or password and press [ENTER]:" MSR_PASSWORD
+[ -z "$MSR_HOSTNAME" ] && read -p "Enter the OLD MSR hostname and press [ENTER]: " MSR_HOSTNAME
+[ -z "$MSR_USER" ] && read -p "Enter the OLD MSR username and press [ENTER]: " MSR_USER
+[ -z "$MSR_PASSWORD" ] && read -s -p "Enter the OLD MSR token or password and press [ENTER]: " MSR_PASSWORD
+
+MEMBERS_FILE=/var/tmp/dtr-members-$$
+ADMINS_FILE=/var/tmp/dtr-admins-$$
 
 ## Extract all namespaces
 nss=$(curl -ks -u ${MSR_USER}:${MSR_PASSWORD} -X GET "https://${MSR_HOSTNAME}/enzi/v0/accounts?filter=orgs" -H "accept: application/json" | \
@@ -13,10 +16,17 @@ nss=$(curl -ks -u ${MSR_USER}:${MSR_PASSWORD} -X GET "https://${MSR_HOSTNAME}/en
 while IFS= read -r namespace ; do
   echo $namespace
   member_list=$(curl -ksLS -u ${MSR_USER}:${MSR_PASSWORD} -X GET "https://$MSR_HOSTNAME/enzi/v0/accounts/${namespace}/members?pageSize=1000&count=true" | \
-                   jq -r -c '[.members[] | select(.isAdmin == false) | .member.name]')
+    jq -r -c '[.members[] | select(.isAdmin == false) | .member.name]')
   admin_list=$(curl -ksLS -u ${MSR_USER}:${MSR_PASSWORD} -X GET "https://$MSR_HOSTNAME/enzi/v0/accounts/${namespace}/members?pageSize=1000&count=true" | \
-                   jq -r -c '[.members[] | select(.isAdmin == true) | .member.name]')
-  echo "$namespace: $member_list"
-  echo "$namespace: $admin_list"
+    jq -r -c '[.members[] | select((.member.name != "admin") and (.isAdmin == true)) | .member.name]')
+  echo "$namespace: $member_list" >> $MEMBERS_FILE
+  echo "$namespace: $admin_list" >> $ADMINS_FILE
 done <<< "$nss"
+
+sleep 1
+echo "======= MEMBERS ======="
+cat $MEMBERS_FILE
+sleep 1
+echo "======= ADMINS ======="
+cat $ADMINS_FILE
 
