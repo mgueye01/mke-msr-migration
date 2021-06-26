@@ -14,19 +14,10 @@ nss=$(curl -ks -u ${MSR_USER}:${MSR_PASSWORD} -X GET "https://${MSR_HOSTNAME}/en
 
 ## Loop through namespaces to get users
 while IFS= read -r namespace ; do
-  echo $namespace
   member_list=$(curl -ksLS -u ${MSR_USER}:${MSR_PASSWORD} -X GET "https://$MSR_HOSTNAME/enzi/v0/accounts/${namespace}/members?pageSize=1000&count=true" | \
     jq -r -c '[.members[] | select(.isAdmin == false) | .member.name]')
   admin_list=$(curl -ksLS -u ${MSR_USER}:${MSR_PASSWORD} -X GET "https://$MSR_HOSTNAME/enzi/v0/accounts/${namespace}/members?pageSize=1000&count=true" | \
     jq -r -c '[.members[] | select((.member.name != "admin") and (.isAdmin == true)) | .member.name]')
-  echo "$namespace: $member_list" >> $MEMBERS_FILE
-  echo "$namespace: $admin_list" >> $ADMINS_FILE
+  [ "[]" == $member_list ] || echo "$namespace: $member_list" >> $MEMBERS_FILE
+  [ "[]" == $admin_list ] ||  echo "$namespace: $admin_list" >> $ADMINS_FILE
 done <<< "$nss"
-
-sleep 1
-echo "======= MEMBERS ======="
-cat $MEMBERS_FILE
-sleep 1
-echo "======= ADMINS ======="
-cat $ADMINS_FILE
-
