@@ -10,7 +10,7 @@ MEMBERS_FILE=/var/tmp/dtr-members-$$
 ADMINS_FILE=/var/tmp/dtr-admins-$$
 
 ## Extract all namespaces
-nss=$(curl -ks -u ${MSR_USER}:${MSR_PASSWORD} -X GET "https://${MSR_HOSTNAME}/enzi/v0/accounts?filter=orgs" -H "accept: application/json" | \
+nss=$(curl -ks -u ${MSR_USER}:${MSR_PASSWORD} "https://${MSR_HOSTNAME}/enzi/v0/accounts?filter=orgs&limit=1000" -H "accept: application/json" | \
        jq -r -c '.accounts[] | select((.isOrg == true) and (.name != "docker-datacenter")) | .name')
 
 ## Loop through namespaces to get users
