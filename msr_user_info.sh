@@ -1,9 +1,9 @@
 #!/bin/bash
 
 ## Capture MSR Info
-[ -z "$MSR_HOSTNAME" ] && read -p "Enter the OLD MSR hostname and press [ENTER]: " MSR_HOSTNAME
-[ -z "$MSR_USER" ] && read -p "Enter the OLD MSR username and press [ENTER]: " MSR_USER
-[ -z "$MSR_PASSWORD" ] && read -s -p "Enter the OLD MSR token or password and press [ENTER]: " MSR_PASSWORD
+[ -z "$MSR_HOSTNAME" ] && read -p "Enter the MSR hostname and press [ENTER]: " MSR_HOSTNAME
+[ -z "$MSR_USER" ] && read -p "Enter the MSR username and press [ENTER]: " MSR_USER
+[ -z "$MSR_PASSWORD" ] && read -s -p "Enter the MSR token or password and press [ENTER]: " MSR_PASSWORD
 
 echo -e "\nProcessing ....."
 MEMBERS_FILE=/var/tmp/dtr-members-$$
