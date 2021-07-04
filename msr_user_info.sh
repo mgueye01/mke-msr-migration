@@ -37,10 +37,12 @@ admins=$(cat $ADMINS_FILE)
 while IFS= read -r line ; do
   ns=$(echo $line | awk -F': [[]"|","' '{sub(/"]$/,""); print $1}')
   echo $line | awk -F': [[]"|","' '{sub(/"]$/,""); for (i=2; i<=NF; i++) print $i}' | \
-    xargs -t -I{} curl -ksLS -u ${DEST_MSR_USER}:${DEST_MSR_PASSWORD} \
+    xargs -I{} curl -ksLS -u ${DEST_MSR_USER}:${DEST_MSR_PASSWORD} \
     -X PUT "https://${DEST_MSR_HOSTNAME}/enzi/v0/accounts/${ns}/members/{}" \
     -H "Content-Type: application/json" \
-    -d '{"isAdmin":true}'
+    -d '{"isAdmin":true}' \
+    -o /dev/null \
+    -w "%{url_effective}::  %{http_code}\n" 2>&1 >> $RESULTS_FILE
 done <<< "$admins"
 
 echo -e "\n====== PROCESSING COMPLETE ======"
