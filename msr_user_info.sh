@@ -23,18 +23,26 @@ while IFS= read -r namespace ; do
   [ "[]" == $admin_list ] ||  echo "$namespace: $admin_list" >> $ADMINS_FILE
 done <<< "$nss"
 
-#echo -e "====== PROCESSING COMPLETE ======"
-#echo -e "Check the contents of the files:\n $MEMBERS_FILE and $ADMINS_FILE"
-#echo -e "=================================\n"
+echo -e "====== Processing complete for SOURCE ======\n"
+
+RESULTS_FILE=/var/tmp/dtr-results-$$
 
 ## Capture destination MSR Info
 [ -z "$DEST_MSR_HOSTNAME" ] && read -p "Enter the DESTINATION MSR hostname and press [ENTER]: " DEST_MSR_HOSTNAME
 [ -z "$DEST_MSR_USER" ] && read -p "Enter the DESTINATION MSR username and press [ENTER]: " DEST_MSR_USER
 [ -z "$DEST_MSR_PASSWORD" ] && read -s -p "Enter the DESTINATION MSR token or password and press [ENTER]: " DEST_MSR_PASSWORD
 
+echo -e "\n====== Processing entries from SOURCE ======"
 admins=$(cat $ADMINS_FILE)
 while IFS= read -r line ; do
   ns=$(echo $line | awk -F': [[]"|","' '{sub(/"]$/,""); print $1}')
   echo $line | awk -F': [[]"|","' '{sub(/"]$/,""); for (i=2; i<=NF; i++) print $i}' | \
-    xargs -I{} curl -ksLS -u ${DEST_MSR_USER}:${DEST_MSR_PASSWORD} -X PUT "https://${DEST_MSR_HOSTNAME}/enzi/v0/accounts/${ns}/members/{}" -H "Content-Type: application/json" -d '{"isAdmin":true}'
+    xargs -t -I{} curl -ksLS -u ${DEST_MSR_USER}:${DEST_MSR_PASSWORD} \
+    -X PUT "https://${DEST_MSR_HOSTNAME}/enzi/v0/accounts/${ns}/members/{}" \
+    -H "Content-Type: application/json" \
+    -d '{"isAdmin":true}'
 done <<< "$admins"
+
+echo -e "\n====== PROCESSING COMPLETE ======"
+echo -e "Check the contents of the files:\n $RESULTS_FILE, $MEMBERS_FILE and $ADMINS_FILE"
+echo -e "=================================\n"
