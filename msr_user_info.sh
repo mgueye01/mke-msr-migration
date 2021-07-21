@@ -15,9 +15,9 @@ nss=$(curl -ks -u ${MSR_USER}:${MSR_PASSWORD} "https://${MSR_HOSTNAME}/enzi/v0/a
 
 ## Loop through namespaces to get users
 while IFS= read -r namespace ; do
-  member_list=$(curl -ksLS -u ${MSR_USER}:${MSR_PASSWORD} -X GET "https://$MSR_HOSTNAME/enzi/v0/accounts/${namespace}/members?pageSize=9999&count=true" | \
+  member_list=$(curl -ksLS -u ${MSR_USER}:${MSR_PASSWORD} -X GET "https://$MSR_HOSTNAME/enzi/v0/accounts/${namespace}/members?limit=9999&count=true" | \
     jq '[.members[] | select(.isAdmin == false) | .member.name]' | jq -r -c 'sort')
-  admin_list=$(curl -ksLS -u ${MSR_USER}:${MSR_PASSWORD} -X GET "https://$MSR_HOSTNAME/enzi/v0/accounts/${namespace}/members?pageSize=9999&count=true" | \
+  admin_list=$(curl -ksLS -u ${MSR_USER}:${MSR_PASSWORD} -X GET "https://$MSR_HOSTNAME/enzi/v0/accounts/${namespace}/members?limit=9999&count=true" | \
     jq '[.members[] | select((.member.name != "admin") and (.isAdmin == true)) | .member.name]' | jq -r -c 'sort')
   [ "[]" == $member_list ] || echo "$namespace: $member_list" >> $MEMBERS_FILE
   [ "[]" == $admin_list ] ||  echo "$namespace: $admin_list" >> $ADMINS_FILE
