@@ -41,6 +41,7 @@ function msr_login() {
 
 # Check disk size
 function checkDiskSize() {
+        
     #avail=$(df --output=avail -B 1 /var/lib/docker | tail -n 1)
     avail=100
     while (($avail < $MAX_AVAIL)); do
