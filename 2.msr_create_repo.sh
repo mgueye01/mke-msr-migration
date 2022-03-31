@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ $# -gt 0 ]
+  then
+    source $1
+fi
+
 ## Capture DTR Info
 [ -z "$DTR_HOSTNAME" ] && read -p "Enter the DTR hostname and press [ENTER]:" DTR_HOSTNAME
 [ -z "$DTR_USER" ] && read -p "Enter the DTR username and press [ENTER]:" DTR_USER
