@@ -6,11 +6,11 @@ if [ $# -gt 0 ]
 fi
 
 ## Capture MSR Info
-echo "********** SOURCE MSR TO CONFIGURE MIRROR (NEW MSR) ******************"
+echo "********** SOURCE MSR TO CONFIGURE MIRROR (Mirror Policy is created here) ******************"
 [ -z "$MSR_HOSTNAME" ] && read -p "Enter the MSR hostname and press [ENTER]:" MSR_HOSTNAME
 [ -z "$MSR_USER" ] && read -p "Enter the MSR username and press [ENTER]:" MSR_USER
 [ -z "$MSR_PASSWORD" ] && read -s -p "Enter the MSR token or password and press [ENTER]:" MSR_PASSWORD
-echo "********* REMOTE MSR CONFIG - Location to pull images from (OLD MSR) ***********\\n"
+echo "********* REMOTE MSR CONFIG - Location to pull images from (Old MSR) ***********\\n"
 [ -z "$REMOTE_MSR_HOSTNAME" ] && read -p "Enter the REMOTE MSR hostname and press [ENTER]:" REMOTE_MSR_HOSTNAME
 [ -z "$REMOTE_MSR_USER" ] && read -p "Enter the MSR username and press [ENTER]:" REMOTE_MSR_USER
 [ -z "$REMOTE_MSR_PASSWORD" ] && read -s -p "Enter the MSR token or password and press [ENTER]:" REMOTE_MSR_PASSWORD
@@ -29,7 +29,6 @@ CURLOPTS=(-kLsS -H 'accept: application/json' -H 'content-type: application/json
 
 ## Read repositories file
 repo_list=$(cat ${REPO_FILE} | jq -c -r '.[]') 
-
 
 # Loop through repositories
 while IFS= read -r row ; do

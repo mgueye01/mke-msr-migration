@@ -43,7 +43,6 @@ while IFS= read -r row ; do
     tag_list=$(curl -ksLS -u ${MSR_USER}:${MSR_PASSWORD} -X GET "https://$MSR_HOSTNAME/api/v0/repositories/${namespace}/${reponame}/tags?pageSize=10000000")
     tag_count=$(echo "$tag_list" | jq 'length' )
     tag_names=$(echo "$tag_list" | jq -r .[].name)
-    echo ${tag_list} | jq -c -r '.[]' > tag_list.json
     for item in $(echo "${tag_list}" | jq -r '.[] | @base64'); do
       _jq() {
         echo ${item} | base64 --decode
@@ -54,6 +53,7 @@ while IFS= read -r row ; do
     echo "Org: ${namespace}, Repo: ${reponame}, Tags: ${tag_count}"
     echo "Org: ${namespace}, Repo: ${reponame}, Tags: ${tag_count}" >> $REPO_COUNT_FILE
     
+    [ -z "$tag_count" ] && tag_count=0
     tags=$(($tags + $tag_count))
 done <<< "$repo_list"
 
