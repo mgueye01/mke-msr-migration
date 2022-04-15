@@ -18,7 +18,7 @@ echo "***************************************\\n"
 echo "***************************************\\n"
 
 ## Set defaults
-[ -z "$NAMESPACE" ] && NAMESPACE=""
+[ "$NAMESPACE" == "all" ] && NAMESPACE=""
 [ -z "$REPO_FILE" ] && REPO_FILE="${NAMESPACE}_repositories.json"
 [ -z "$REPO_TAG_INFO" ] && REPO_TAG_INFO="${NAMESPACE}_repo_tags.txt"
 [ -z "$REPO_COUNT_FILE" ] && REPO_COUNT_FILE="${NAMESPACE}_repo_count.txt"
