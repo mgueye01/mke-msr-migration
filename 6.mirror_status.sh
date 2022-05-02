@@ -13,13 +13,14 @@ echo ""
 echo "***************************************\\n"
 
 [ -z "$REPO_FILE" ] && read -p "Repositories file(repositories.json):" REPO_FILE
-[ -z "$REPO_MIRROR_ENABLE" ] && read -p "Enable Mirroring(true or false):" REPO_MIRROR_ENABLE
 
-CURLOPTS=(-kLsS -u ${MSR_USER}:${MSR_PASSWORD} -H 'accept: application/json' -H 'content-type: application/json')
+TOKEN=$(curl -kLsS -u ${MSR_USER}:${MSR_PASSWORD} "https://${MSR_HOSTNAME}/auth/token" | jq -r '.token')
+CURLOPTS=(-kLsS -H 'accept: application/json' -H 'content-type: application/json' -H "Authorization: Bearer ${TOKEN}")
 
 ## Read repositories file
 repo_list=$(cat ${REPO_FILE} | jq -c -r '.[]') 
 
+pending=0
 # Loop through repositories
 while IFS= read -r row ; do
     namespace=$(echo "$row" | jq -r .namespace)
@@ -32,24 +33,19 @@ while IFS= read -r row ; do
     
     policies_num=$(echo $repos | jq 'length')
     policies=$(echo $pollMirroringPolicies | jq -c -r '.[]')
-    
     while IFS= read -r policy; do
         id=$(echo $policy | jq -r .id)
         enabled=$(echo $policy | jq -r .enabled)
-        if [ "$REPO_MIRROR_ENABLE" == "true" ]
+        if [ "x$enabled" == "xtrue" ]
         then
-            postdata=$(echo { \"enabled\": true })
-        elif [ "$REPO_MIRROR_ENABLE" == "false" ]
-        then
-            postdata=$(echo { \"enabled\": false })
+            lastStatus=$(echo $policy | jq -r .lastStatus.code)
+            echo "Repo: ${namespace}/${reponame}, PolicyId: ${id}, Enabled: ${enabled} ==> Status: ${lastStatus}"
         else
-            echo "Invalid Enable flag"
-            exit 1
+            echo "Repo: ${namespace}/${reponame}, PolicyId: ${id}, Enabled: ${enabled}"
         fi
-        response=$(curl "${CURLOPTS[@]}" -X PUT -d "$postdata" \
-                "https://${MSR_HOSTNAME}/api/v0/repositories/${namespace}/${reponame}/pollMirroringPolicies/${id}")
-
-        echo "Repo: ${namespace}/${reponame}, PolicyId: ${id}, Enabled: ${REPO_MIRROR_ENABLE}"
+        id=
+        enabled=
+        status=
     done <<< "$policies"
 done <<< "$repo_list"
 echo "=========================================\\n"
