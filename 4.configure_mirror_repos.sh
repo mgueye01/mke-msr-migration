@@ -1,5 +1,5 @@
 #!/bin/bash
-
+## Configures Mirror on the repositories
 if [ $# -gt 0 ]
   then
     source $1
@@ -24,8 +24,7 @@ REMOTE_URL="https://${REMOTE_MSR_HOSTNAME}"
 
 [ -z "$REPO_FILE" ] && read -p "Repositories file(repositories.json):" REPO_FILE
 
-TOKEN=$(curl -kLsS -u ${MSR_USER}:${MSR_PASSWORD} "https://${MSR_HOSTNAME}/auth/token" | jq -r '.token')
-CURLOPTS=(-kLsS -H 'accept: application/json' -H 'content-type: application/json' -H "Authorization: Bearer ${TOKEN}")
+CURLOPTS=(-kLsS -u ${MSR_USER}:${MSR_PASSWORD} -H 'accept: application/json' -H 'content-type: application/json')
 
 ## Read repositories file
 repo_list=$(cat ${REPO_FILE} | jq -c -r '.[]') 
@@ -47,10 +46,11 @@ while IFS= read -r row ; do
         response=$(curl "${CURLOPTS[@]}" -X POST -d "$mirrordata" \
             "https://${MSR_HOSTNAME}/api/v0/repositories/${namespace}/${reponame}/pollMirroringPolicies?initialEvaluation=true")
 
-        echo $response
         echo "Configured mirror on repo ${namespace}/${reponame}"
-    else
+    elif [ "$num_mirrors" -gt "0" ]; then
         echo "Mirror already configured on ${namespace}/${reponame}"
+    else
+        echo "Error configuring mirror on ${namespace}/${reponame}"
     fi
 
 done <<< "$repo_list"
