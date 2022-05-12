@@ -11,6 +11,8 @@ fi
 [ -z "$MSR_HOSTNAME" ] && read -p "Enter the MSR hostname and press [ENTER]:" MSR_HOSTNAME
 [ -z "$MSR_USER" ] && read -p "Enter the MSR username and press [ENTER]:" MSR_USER
 [ -z "$MSR_PASSWORD" ] && read -s -p "Enter the MSR token or password and press [ENTER]:" MSR_PASSWORD
+[ -z "$MKE_USER" ] && read -p "Enter MKE username and press [ENTER]:" MKE_USER
+[ -z "$MKE_PASSWORD" ] && read -s -p "Enter MKE password and press [ENTER]:" MKE_PASSWORD
 
 ###################################
 # edit vars
@@ -43,7 +45,7 @@ replicas=""
 function get_replicas () {
   echo " connecting to UCP for a token and the list of DTR replicas"
 
-  token=$(curl -sk -d '{"username":"'$MSR_USER'","password":"'$MSR_PASSWORD'"}' https://$MKE_HOSTNAME/auth/login | jq -r .auth_token)
+  token=$(curl -sk -d '{"username":"'$MKE_USER'","password":"'$MKE_PASSWORD'"}' https://$MKE_HOSTNAME/auth/login | jq -r .auth_token)
   replicas=$(curl -skX GET "https://$MKE_HOSTNAME/containers/json" -H  "accept: application/json" -H "Authorization: Bearer $token" | jq -r '.[] | select (.Image | contains("docker/dtr-nginx") or contains("mirantis/dtr-nginx") or contains("mirantiseng/dtr-nginx")) | .Labels."com.docker.compose.service" '|sed -e 's/nginx-//g')
 }
 
