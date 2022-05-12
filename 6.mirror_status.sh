@@ -14,13 +14,11 @@ echo "***************************************\\n"
 
 [ -z "$REPO_FILE" ] && read -p "Repositories file(repositories.json):" REPO_FILE
 
-TOKEN=$(curl -kLsS -u ${MSR_USER}:${MSR_PASSWORD} "https://${MSR_HOSTNAME}/auth/token" | jq -r '.token')
-CURLOPTS=(-kLsS -H 'accept: application/json' -H 'content-type: application/json' -H "Authorization: Bearer ${TOKEN}")
+CURLOPTS=(-kLsS -u ${MSR_USER}:${MSR_PASSWORD} -H 'accept: application/json' -H 'content-type: application/json')
 
 ## Read repositories file
 repo_list=$(cat ${REPO_FILE} | jq -c -r '.[]') 
 
-pending=0
 # Loop through repositories
 while IFS= read -r row ; do
     namespace=$(echo "$row" | jq -r .namespace)
@@ -30,7 +28,7 @@ while IFS= read -r row ; do
     ## Get existing mirroring policies
     pollMirroringPolicies=$(curl "${CURLOPTS[@]}" -X GET \
         "https://${MSR_HOSTNAME}/api/v0/repositories/${namespace}/${reponame}/pollMirroringPolicies")
-    
+
     policies_num=$(echo $repos | jq 'length')
     policies=$(echo $pollMirroringPolicies | jq -c -r '.[]')
     while IFS= read -r policy; do
