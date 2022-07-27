@@ -16,13 +16,19 @@ echo "********* REMOTE MSR CONFIG - Location to pull images from (Old MSR) *****
 echo ""
 echo "***************************************\\n"
 
-[ -z "$REPO_FILE" ] && read -p "Repositories file(repositories.json):" REPO_FILE
+#[ -z "$REPO_FILE" ] && read -p "Repositories file(repositories.json):" REPO_FILE
 
 CURLOPTS=(-kLsS -u ${MSR_USER}:${MSR_PASSWORD} -H 'accept: application/json' -H 'content-type: application/json')
 REMOTE_CURLOPTS=(-kLsS -u ${REMOTE_MSR_USER}:${REMOTE_MSR_PASSWORD} -H 'accept: application/json' -H 'content-type: application/json')
 
+## Extract repositories info
+REPO_FILE=/var/tmp/msr-repos-$REMOTE_MSR_HOSTNAME-$$
+[ "$NAMESPACE" == "all" ] && NAMESPACE="" ## Default or exported  by user
+curl -ks -u ${REMOTE_MSR_USER}:${REMOTE_MSR_PASSWORD} -X GET "https://${REMOTE_MSR_HOSTNAME}/api/v0/repositories/${NAMESPACE}?pageSize=100000&count=true" -H "accept: application/json" | jq .repositories > $REPO_FILE
+repos=$(cat $REPO_FILE)
 ## Read repositories file
-repo_list=$(cat ${REPO_FILE} | jq -c -r '.[]') 
+repo_list=$(echo "${repos}" | jq -c -r '.[]')
+echo "Captured repositoies list in $REPO_FILE"
 
 # Loop through repositories
 while IFS= read -r row ; do
