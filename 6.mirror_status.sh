@@ -41,6 +41,19 @@ while IFS= read -r row ; do
     ## Get Tags from Source MSR
     tags=$(curl "${CURLOPTS[@]}" -X GET \
         "https://${MSR_HOSTNAME}/api/v0/repositories/${namespace}/${reponame}/tags?pageSize=10000000")
+  
+    if [[ "$tags" =~ "504 Gateway Time-out" ]]; then
+        echo "Unable to retrieve tags for the repository $namespace/$reponame"
+        sleep 5
+        # Repeat
+        tags=$(curl "${CURLOPTS[@]}" -X GET \
+        "https://${MSR_HOSTNAME}/api/v0/repositories/${namespace}/${reponame}/tags?pageSize=10000000")
+        if [[ "$tags" =~ "504 Gateway Time-out" ]]; then
+            echo "Skipping repo $namespace/$reponame"
+            continue
+        fi
+    fi
+
     tag_count=$(echo "$tags" | jq 'length' )
     ## Get Tags from Destination MSR
     tags_remote=$(curl "${REMOTE_CURLOPTS[@]}" -X GET \
