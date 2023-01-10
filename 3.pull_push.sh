@@ -1,5 +1,9 @@
 #!/bin/bash
-
+# set -x
+if [ $# -gt 0 ]
+  then
+  source $1
+fi
 ## Capture SOURCE MSR Info
 [ -z "$SOURCE_MSR" ] && read -p "Enter the MSR hostname and press [ENTER]:" SOURCE_MSR
 [ -z "$SOURCE_MSR_USER" ] && read -p "Enter the MSR username and press [ENTER]:" SOURCE_MSR_USER
@@ -21,7 +25,8 @@ if ! test "$REPOS_WITH_TAGS"; then
 fi
 
 ## Size in GB -> ~10G Default
-MAX_AVAIL=16061861888
+# MAX_AVAIL=16061861888
+MIN_AVAIL=10240
 
 touch tags.SUCCESS
 touch tags.PROCESSING
@@ -41,21 +46,26 @@ function msr_login() {
 
 # Check disk size
 function checkDiskSize() {
-    avail=100
-    while (($avail < $MAX_AVAIL)); do
+    avail=$(getDiskSize)
+    echo "Disk size: $avail"
+    if (($avail < $MIN_AVAIL)); then
         echo "Removing images.."
         removeImages
         #avail=10241
         #if (($avail < $MAX_AVAIL)); then
         #    echo ""
         #fi
-    done
+    fi
+}
+function getDiskSize() {
+    avail=$(df -m /var/lib/docker |tail -1 |awk '{print $4}')
+    echo $avail
 }
 
 function removeImages() {
 
     for _file in tags.SUCCESS tags.FAILED; do
-        if [ -s "$_file" ] 
+        if [ -s "$_file" ]
         then
                 src_images_to_remove=$(cat $_file | sed "s/^/${SOURCE_MSR}\//" | tr '\n' ' ')
                 dest_images_to_remove=$(cat $_file | sed "s/^/${DEST_MSR}\//" | tr '\n' ' ')
@@ -71,11 +81,12 @@ function removeImages() {
 msr_login $SOURCE_MSR $SOURCE_MSR_USER $SOURCE_MSR_PASSWORD
 msr_login $DEST_MSR $DEST_MSR_USER $DEST_MSR_PASSWORD
 
-while IFS= read -r image; do
+while IFS= read -r image_tmp; do
+    image=$(echo $image_tmp | awk -F, '{print $1"/"$2":"$3}' | sed 's/"//g')
     
-    #echo "Checking disk size..."
+    echo "Checking disk size..."
     checkDiskSize
-    
+
     if grep -q ${image} tags.PROCESSING tags.SUCCESS; then
         echo "Skipped $image"
         continue

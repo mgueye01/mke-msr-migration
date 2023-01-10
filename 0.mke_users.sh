@@ -1,22 +1,25 @@
 #!/bin/bash
-
+# set -x
 ## Pass the env file (Optional)
-source $1
+if [ $# -gt 0 ]
+    then
+    source $1
+fi
 
 ## Capture SOURCE MKE Info
-[ -z "$SOURCE_MKE" ] && read -p "Enter the MKE hostname and press [ENTER]:" SOURCE_MKE
-[ -z "$SOURCE_MKE_USER" ] && read -p "Enter the MKE username and press [ENTER]:" SOURCE_MKE_USER
-[ -z "$SOURCE_MKE_PASSWORD" ] && read -s -p "Enter the MKE token or password and press [ENTER]:" SOURCE_MKE_PASSWORD
+[ -z "$SOURCE_MKE" ] && read -pr "Enter the MKE hostname and press [ENTER]:" SOURCE_MKE
+[ -z "$SOURCE_MKE_USER" ] && read -pr "Enter the MKE username and press [ENTER]:" SOURCE_MKE_USER
+[ -z "$SOURCE_MKE_PASSWORD" ] && read -s -pr "Enter the MKE token or password and press [ENTER]:" SOURCE_MKE_PASSWORD
 
 ## Capture DEST_MKE Info
-[ -z "$DEST_CREATE" ] && read -p "Create objects in the target cluster(true or false) and press [ENTER]:" DEST_CREATE
+[ -z "$DEST_CREATE" ] && read -pr "Create objects in the target cluster(true or false) and press [ENTER]:" DEST_CREATE
 
 if $DEST_CREATE;
-then 
-    echo "Capture Destination MKE Info...\n"
-    [ -z "$DEST_MKE" ] && read -p "Enter the MKE hostname and press [ENTER]:" DEST_MKE
-    [ -z "$DEST_MKE_USER" ] && read -p "Enter the MKE username and press [ENTER]:" DEST_MKE_USER
-    [ -z "$DEST_MKE_PASSWORD" ] && read -s -p "Enter the MKE token or password and press [ENTER]:" DEST_MKE_PASSWORD
+then
+    printf "Capture Destination MKE Info...\n"
+    [ -z "$DEST_MKE" ] && read -pr "Enter the MKE hostname and press [ENTER]:" DEST_MKE
+    [ -z "$DEST_MKE_USER" ] && read -pr "Enter the MKE username and press [ENTER]:" DEST_MKE_USER
+    [ -z "$DEST_MKE_PASSWORD" ] && read -s -pr "Enter the MKE token or password and press [ENTER]:" DEST_MKE_PASSWORD
 fi
 
 function getAccessToken() {
@@ -61,7 +64,7 @@ do
         fi
 
         teams=$(curl "${CURLOPTS[@]}" -X GET "https://$SOURCE_MKE/accounts/$ORG/teams?filter=orgs&limit=$LIMIT" | jq -r .teams[].name)
-        
+
         for TEAM in $teams;
         do
             ## Create Team
@@ -71,9 +74,9 @@ do
                 TEAM_INFO=$(curl "${CURLOPTS[@]}" -X GET "https://$SOURCE_MKE/accounts/$ORG/teams/$TEAM")
 
                 TEAM_DESCRIPTION=$(echo $TEAM_INFO | jq -r .description)
-                
+
                 data=$(echo { \"description\": \"${TEAM_DESCRIPTION}\", \"name\": \"${TEAM}\"})
-                
+
                 TEAM_RESPONSE=$(curl "${DEST_CURLOPTS[@]}" -sk -X POST -d "${data}" https://${DEST_MKE}/accounts/${ORG}/teams)
 
                 ## Get memberSyncConfig
@@ -91,14 +94,15 @@ do
                     echo "Adding members to the team"
                     echo "members -- " $MEMBERS
                     for MEMBER in $MEMBERS;
-                    do 
+                    do
                         echo "adding $MEMBER"
                         data=$(echo { \"isAdmin\": false })
                         R=$(curl "${DEST_CURLOPTS[@]}" -X PUT "https://${DEST_MKE}/accounts/${ORG}/teams/${TEAM}/members/${MEMBER}" -d "$data" )
+                        # curl "${DEST_CURLOPTS[@]}" -X PUT "https://${DEST_MKE}/accounts/${ORG}/teams/${TEAM}/members/${MEMBER}" -d "$data" 
                     done
                 fi
             fi
-            echo $ORG "->" $TEAM "-> (" $members ")"
+            echo $ORG "->" $TEAM "-> (" $MEMBERS ")"
         done
     fi
 done
